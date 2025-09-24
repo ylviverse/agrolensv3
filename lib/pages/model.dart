@@ -112,43 +112,47 @@ class RiceDiseaseModel {
   Map<String, dynamic> _processClassificationResults(List<double> results) {
     // Convert logits to probabilities using softmax
     List<double> probabilities = _softmax(results);
-    
-    // Find the index with highest probability
-    int bestIndex = 0;
-    double maxScore = probabilities[0];
-    
-    for (int i = 1; i < probabilities.length; i++) {
-      if (probabilities[i] > maxScore) {
-        maxScore = probabilities[i];
-        bestIndex = i;
-      }
+
+    // Create a list of all predictions with their labels and confidences
+    List<Map<String, dynamic>> allPredictions = [];
+    for (int i = 0; i < probabilities.length; i++) {
+      allPredictions.add({
+        'disease': diseaseLabels[i],
+        'confidence': probabilities[i],
+      });
     }
-    
-    // Map class index to disease label
-    String disease = bestIndex < diseaseLabels.length 
-      ? diseaseLabels[bestIndex]
-      : 'Unknown Disease';
-    
-    double confidence = maxScore;
-    
+
+    // Sort by confidence in descending order
+    allPredictions.sort((a, b) => (b['confidence'] as double).compareTo(a['confidence'] as double));
+
+    // Get the top prediction
+    String disease = allPredictions[0]['disease'];
+    double confidence = allPredictions[0]['confidence'];
+
     // If confidence is below 70%, classify as unknown disease
-    if (confidence < 0.7) {
+    if (confidence < 0.3) {
       disease = 'Unknown Disease';
-      confidence = 0.0;
+      // Note: You might want to keep the original confidence or set it to 0
     }
-    
+
     String severity = _calculateSeverity(disease, confidence);
-    
+
     print('Predicted: $disease (${(confidence * 100).toStringAsFixed(1)}%)');
     print('All probabilities: ${probabilities.map((p) => '${(p * 100).toStringAsFixed(1)}%').toList()}');
-    
+
     return {
       'disease': disease,
       'confidence': confidence,
       'severity': severity,
-      'raw_prediction': bestIndex.toString(),
+      // Add the top 3 predictions to the map
+      'top3_predictions': allPredictions.take(3).toList(),
     };
   }
+
+
+
+
+  
 
   /// Convert logits to probabilities using softmax function
   List<double> _softmax(List<double> logits) {
@@ -224,11 +228,11 @@ class RiceDiseaseModel {
     switch (disease.toLowerCase()) {
       case 'bacterial leaf blight':
         return 'Bacterial leaf blight is a serious disease caused by Xanthomonas oryzae pv. oryzae. It causes wilting and yellowing of leaves, significantly reducing rice yield.';
-      case 'rice blast':
-        return 'Rice blast is a fungal disease caused by Magnaporthe oryzae. It can cause significant yield losses by destroying leaves, stems, and panicles.';
+      case 'leaf blast':
+        return 'Leaf blast is a destructive fungal disease caused by Magnaporthe oryzae. It appears as diamond-shaped lesions on leaves, which can reduce the plants photosynthetic ability and lead to severe yield loss.';
       case 'sheath blight':
         return 'Sheath blight is caused by the fungus Rhizoctonia solani. It affects the sheath and leaves, causing lesions that can reduce photosynthesis and yield.';
-      case 'tungro virus':
+      case 'tungro':
         return 'Tungro virus is transmitted by green leafhoppers. It causes stunted growth, yellowing of leaves, and reduced tillering in rice plants.';
       case 'brown spot':
         return 'Brown spot is a fungal disease caused by Bipolaris oryzae. It appears as brown lesions on leaves and can reduce photosynthesis and yield.';
