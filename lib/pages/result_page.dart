@@ -354,7 +354,17 @@ class _ResultPageState extends State<ResultPage> with TickerProviderStateMixin {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
+                                  Text(
+                                    '${i + 1}.',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
                                   // Wrap only the Icon with GestureDetector
                                   GestureDetector(
                                     onTap: () => _showRecommendations(diseaseName),
