@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:agrolens/pages/model.dart';
+import 'package:agrolens/pages/recommendation.dart';
 import 'package:agrolens/themes/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -137,6 +138,29 @@ class _ResultPageState extends State<ResultPage> with TickerProviderStateMixin {
     );
   }
 
+
+
+
+/// Show recommendations in a modal bottom sheet
+  void _showRecommendations(String diseaseName) {
+    final recommendations = _model.getRecommendations(diseaseName);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent, // Make sheet background transparent
+      builder: (context) {
+        return RecommendationSheet(
+          diseaseName: diseaseName,
+          recommendations: recommendations,
+        );
+      },
+    );
+  }
+
+
+
+
+
+
   Color _getHealthColor(String disease) {
     switch (disease.toLowerCase()) {
       case 'brown spot':
@@ -144,7 +168,7 @@ class _ResultPageState extends State<ResultPage> with TickerProviderStateMixin {
       case 'bacterial leaf blight':
       case 'sheath blight':
       case 'tungro':
-        return CupertinoColors.systemYellow;
+        return CupertinoColors.white;
       case 'unknown disease':
         return CupertinoColors.systemOrange;
       case 'error':
@@ -161,7 +185,7 @@ class _ResultPageState extends State<ResultPage> with TickerProviderStateMixin {
       case 'bacterial leaf blight':
       case 'sheath blight':
       case 'tungro':
-        return CupertinoIcons.exclamationmark_triangle;
+        return CupertinoIcons.captions_bubble;
       case 'unknown disease':
         return CupertinoIcons.question_circle;
       case 'error':
@@ -304,21 +328,19 @@ class _ResultPageState extends State<ResultPage> with TickerProviderStateMixin {
                       ];
                     }
 
-                    // ...existing code...
+       
                     // Build the UI widgets from the top3 list
-                    return Column(
+                     return Column(
                       children: List.generate(top3.length, (i) {
                         final prediction = top3[i];
                         final diseaseName = prediction['disease'] as String;
-                        final confidence = (prediction['confidence'] as double) * 100;
 
-                        // This is the widget for a single result item, using your original design style
                         return Container(
                           margin: const EdgeInsets.symmetric(vertical: 8),
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: i == 0
-                                ? Colors.white.withOpacity(0.25) 
+                                ? Colors.white.withOpacity(0.25)
                                 : Colors.white.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
@@ -333,13 +355,20 @@ class _ResultPageState extends State<ResultPage> with TickerProviderStateMixin {
                             children: [
                               Row(
                                 children: [
-                                  // Use your icon helper
-                                  Icon(
-                                    _getHealthIcon(diseaseName),
-                                    color: _getHealthColor(diseaseName),
-                                    size: 28,
+                                  // Wrap only the Icon with GestureDetector
+                                  GestureDetector(
+                                    onTap: () => _showRecommendations(diseaseName),
+                                    // Add a transparent background to increase tap area
+                                    child: Container(
+                                      color: Colors.transparent,
+                                      padding: const EdgeInsets.only(right: 12.0), // Increase tap area to the right
+                                      child: Icon(
+                                        _getHealthIcon(diseaseName),
+                                        color: _getHealthColor(diseaseName),
+                                        size: 28,
+                                      ),
+                                    ),
                                   ),
-                                  const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
                                       diseaseName,
@@ -350,20 +379,14 @@ class _ResultPageState extends State<ResultPage> with TickerProviderStateMixin {
                                       ),
                                     ),
                                   ),
-                                
                                 ],
                               ),
                               const SizedBox(height: 12),
-
-
-                              
-                              // Divider using your health color
                               Divider(
                                 color: _getHealthColor(diseaseName).withOpacity(0.5),
                                 thickness: 1,
                               ),
                               const SizedBox(height: 12),
-                              // Description text
                               Text(
                                 _model.getDiseaseDescription(diseaseName),
                                 style: const TextStyle(
